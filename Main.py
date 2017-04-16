@@ -40,11 +40,43 @@ class Main:
 
 	def updateNetwork(self,protocol):
 		if protocol == "basic":
-			print("TODO")
+			for node in network:
+				vector = node.getVector()
+				for name in nodeNames:
+					#add noes 
+					if(name not in vector and name != node.getName()):
+						hops,dist = self.findBestPath(node,name)
+						node.updateValue(name,dist,hops)
 		elif protocol == "splith":
 			print("TODO")
 		elif protocol == "splithpv":
 			print("TODO")
+	#finds best path using UCS with each router sharing only each other's DV
+	def findBestPath(self,node,dest):
+		queue = util.PriorityQueue()
+	    atgoal = []
+	    #Root contains state,actionlist,total cost
+	    actionList = []
+	    root = (node,actionList,0)
+	    visitedList = []
+	    queue.push(root,0)
+
+	    while queue.isEmpty() is False:
+	        n = queue.pop()
+	        current = n[0][0]
+	        actionList = n[1]
+	        if current == dest:
+	        	#FIX THIS
+	            return (len(actionList),n[2])
+	        if n[0][0] not in visitedList:
+	            visitedList = visitedList + [n[0][0]]
+	            for child in self.getNodeByName(n[0][0]).getVector():
+	                if child[0] not in visitedList:
+	                    #Calculate the total cost of this so we can add it to priority queue appropriately
+	                    cost = sum(actionList + [child[1]])
+	                    newnode = (self.getNodeByName(child[0]),actionList + [child[1]],cost)
+	                    #Priority Queue takes care of pushing by cost calculations.
+	                    queue.push(newnode,cost)
 
 	def hasEvent(self,curRound):
 		for i in range(len(self.events)):
@@ -104,6 +136,11 @@ class Main:
 		self.events = [] #list of events and their descriptions
 		self.nodeNames = [] # a list of names of all nodes
 		self.currentRound = 0 #current round
+
+	def getNodeByName(self,name):
+		for node in self.network:
+			if(node.getName() == name):
+				return node
 if __name__ == "__main__":
 	m = Main("initial.txt","","")
 	m.setup()
