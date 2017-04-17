@@ -20,13 +20,16 @@ class Node:
         newTup = (name,value,hops)
         for v in self.vector:
             if(v[0] == name):
-                v = newTup
+                self.vector.remove(v)
+                self.vector.append(newTup)
                 return
 
     def deleteValue(self,name):
+        tup = (name,-1,"-1")
         for v in self.vector:
             if(v[0] == name):
-                self.vector.remove(v)
+                v = tup
+                return
 
     def addValue(self,name,dist,hops):
         tup = (name,dist,hops)
@@ -58,6 +61,6 @@ class Node:
             if(self.name == v[0]):
                 ans += "0,0" + "  "
             else:
-                ans += str(v[1]) + "," + v[2] + "  "
+                ans += str(v[2]) + "," + str(v[1])  + "  "
         return ans
 

@@ -9,7 +9,7 @@ class Main:
         self.network = [] #list of nodes
         self.events = [] #list of events and their descriptions
         self.nodeNames = [] # a list of names of all nodes
-        self.currentRound = 0 #current round
+        self.currentRound = 1 #current round
 
     def setup(self,protocol):
         f = open(self.initial,"r")
@@ -26,16 +26,16 @@ class Main:
             first,second,dist = line.split()
             for node in self.network:
                 if(node.getName() == first):
-                    node.addValue(second,int(dist),"0")
-                    node.addValue(first,0,"0")
+                    node.addValue(second,int(dist),0)
+                    node.addValue(first,0,0)
                 elif(node.getName() == second):
-                    node.addValue(first,int(dist),"0")
-                    node.addValue(second,0,"0")
+                    node.addValue(first,int(dist),0)
+                    node.addValue(second,0,0)
         f.close()
         for node in self.network:
             for name in self.nodeNames: 
                 if(node.contains(name) is False):
-                    node.addValue(name,-1,"-1")
+                    node.addValue(name,-1,-1)
         #queue future updates for network events
         f = open(self.eventFile,"r")
         for line in f.readlines():
@@ -45,39 +45,25 @@ class Main:
             self.events.append([time,line[1],line[2],dist]) 
         f.close()
 
-    #finds best path using UCS with each router sharing only each other's DV
-    def findBestPath(self,node,dest):
-        q = []
-        atgoal = []
-        #Root contains state,actionlist,total cost
-        actionList = []
-        root = (node,actionList,"0")
-        visitedList = []
-        q.append((0,root))
+    #finds best path using Bellman Ford with each router sharing only each other's DV
+    def updateVectorTable(self,node):
+        for n in node.getVector():
+            neighbor = self.getNodeByName(n[0])
+            for vector in neighbor.getVector():
+                current = n[1]
+                vector = vector[1]
+                other = n.getVectorByName(n[0])[1]
+                if(current < other + vector):
+                    #update
 
-        while len(q) != 0:
-            n = q.pop()
-            noder = n[1][0]
-            actionList = n[1][1]
-            if noder.getName() == dest:
-                return (len(actionList) - 1,n[1][2])
-            if noder not in visitedList:
-                visitedList = visitedList + [noder]
-                for child in noder.getVector():
-                    if child[0] not in visitedList:
-                        #Calculate the total cost of this so we can add it to priority queue appropriately
-                        cost = sum(actionList + [child[1]])
-                        newnode = (self.getNodeByName(child[0]),actionList + [child[1]],str(noder.getName()))
-                        #Priority Queue takes care of pushing by cost calculations.
-                        q.append((cost,newnode))
-            q.sort()
-
-    def hasEvent(self,curRound):
+    def doEvent(self,curRound):
         for i in range(len(self.events)):
             if self.events[i][0] == curRound:
                 self.updateEvent(self.events[i])
                 #remove event after use
                 del self.events[i]
+                return True
+        return False
 
     def updateEvent(self,event):
         first = event[1]
@@ -87,21 +73,31 @@ class Main:
             if(node.getName() == first):
                 if(dist == -1):
                     #kill the link with the other node
-                    node.deleteValue(second)
+                    node.updateValue(second,-1,-1)
                 else:
                     #else update the other link
-                    node.updateValue(second,dist)
+                    print("Updated path: ", node.getName() + " - " + second)
+                    node.updateValue(second,dist,0)
+                    print("New Vector: ", node.getVector())
             elif(node.getName() == second):
                 if(dist == -1):
-                    node.deleteValue(first)
+                    node.updateValue(first,-1,-1)
                 else:
-                    node.updateValue(first,dist)
+                    print("Updated path: ", node.getName() + " - " + first)
+                    node.updateValue(first,dist,0)
     
     def basic(self):
         self.setup("basic")
-        for node in self.network:
-            print(node.getName() + ": ",node.getVector())
-        self.getVectors()
+        converged = False
+        while self.currentRound < 5:
+            if(self.flag == 1):
+                #print("At Round: ",self.currentRound)
+                #self.getVectors()
+                pass
+            e = self.doEvent(self.currentRound)
+            for node in self.network:
+                self.updateVectorTable(node)
+            self.currentRound += 1
 
         """TO DO IMPLEMENT Basic"""
 
@@ -109,7 +105,7 @@ class Main:
         self.network = [] #list of nodes
         self.events = [] #list of events and their descriptions
         self.nodeNames = [] # a list of names of all nodes
-        self.currentRound = 0 #current round
+        self.currentRound = 1 #current round
 
     def splitHorizon(self):
         self.setup("splith")
@@ -120,7 +116,7 @@ class Main:
         self.network = [] #list of nodes
         self.events = [] #list of events and their descriptions
         self.nodeNames = [] # a list of names of all nodes
-        self.currentRound = 0 #current round
+        self.currentRound = 1 #current round
 
     def splitHorizonPV(self):
         self.setup("splithpv")
@@ -131,7 +127,7 @@ class Main:
         self.network = [] #list of nodes
         self.events = [] #list of events and their descriptions
         self.nodeNames = [] # a list of names of all nodes
-        self.currentRound = 0 #current round
+        self.currentRound = 1 #current round
 
     def getNodeByName(self,name):
         for node in self.network:
@@ -142,11 +138,11 @@ class Main:
         print("Round: ",self.currentRound)
         col = "   "
         for i in range(len(self.network)):
-            col += str(i) + "    "
+            col += str(i + 1) + "    "
         print(col)
         for node in self.network:
             print(node.printVector(len(self.network)))
 
 if __name__ == "__main__":
-    m = Main("initial.txt","event.txt",0)
+    m = Main("initial.txt","event.txt",1)
     m.basic()
