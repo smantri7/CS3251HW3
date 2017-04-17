@@ -16,10 +16,11 @@ class Node:
     def getHops(self):
         return self.vector[2]
 
-    def updateValue(self,name,value):
+    def updateValue(self,name,value,hops):
+        newTup = (name,value,hops)
         for v in self.vector:
             if(v[0] == name):
-                v[1] = value
+                v = newTup
                 return
 
     def deleteValue(self,name):
@@ -27,8 +28,8 @@ class Node:
             if(v[0] == name):
                 self.vector.remove(v)
 
-    def addValue(self,name,dist):
-        tup = (name,dist)
+    def addValue(self,name,dist,hops):
+        tup = (name,dist,hops)
         if tup not in self.vector:
             self.vector.append(tup)
 
@@ -37,3 +38,26 @@ class Node:
 
     def updateVector(self,newVec):
         self.vector = newVec
+
+    def contains(self,name):
+        for tup in self.vector:
+            if(name in tup[0]):
+                return True
+        return False
+
+    def getVectorByName(self,name):
+        for vec in self.vector:
+            if(name == vec[0]):
+                return vec
+        return None
+
+    def printVector(self,numNodes):
+        ans = self.name + " "
+        for i in range(numNodes):
+            v = self.getVectorByName(str(i + 1))
+            if(self.name == v[0]):
+                ans += "0,0" + "  "
+            else:
+                ans += str(v[1]) + "," + v[2] + "  "
+        return ans
+
