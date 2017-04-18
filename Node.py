@@ -42,6 +42,11 @@ class Node:
     def updateVector(self,newVec):
         self.vector = newVec
 
+    def updateVectorByName(self, newVec):
+        for vec in self.vector:
+            if(name == vec[0]):
+                vec = newVec
+
     def contains(self,name):
         for tup in self.vector:
             if(name in tup[0]):

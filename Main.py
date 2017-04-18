@@ -48,13 +48,12 @@ class Main:
     #finds best path using Bellman Ford with each router sharing only each other's DV
     def updateVectorTable(self,node):
         for n in node.getVector():
-            neighbor = self.getNodeByName(n[0])
-            for vector in neighbor.getVector():
-                current = n[1]
-                vector = vector[1]
-                other = n.getVectorByName(n[0])[1]
-                if(current < other + vector):
-                    #update
+            if n[2] == 1:
+                neighbor = self.getNodeByName(n[0])
+                for vector in neighbor.getVector():
+                    new = vector[1] + n[1]
+                    if(new < node.getVectorByName(vector[0])[1]):
+                        node.updateVectorByName([vector[0], new, vector[2] + 1])
 
     def doEvent(self,curRound):
         for i in range(len(self.events)):
