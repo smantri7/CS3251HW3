@@ -58,7 +58,7 @@ class Main:
                     old = node.getVectorByName(vector[0])[1]
                     if(vector[1] != -1):
                         if(new < old or old == -1):
-                            print("Updated: ",(vector[0], new, str(neighbor.getName())))
+                            #print("Updated: ",(vector[0], new, str(neighbor.getName())))
                             node.updateVectorByName((vector[0], new, neighbor.getName()))
 
     def doEvent(self,curRound):
@@ -71,8 +71,6 @@ class Main:
         return False
 
     def updateEvent(self,event):
-        print("Before")
-        self.getVectors()
         first = event[1]
         second = event[2]
         dist = event[3]
@@ -85,21 +83,19 @@ class Main:
                     node.delNeighbor(second)
                 else:
                     #else update the other link
-                    print("Updated path: ", node.getName() + " - " + second)
+                    #print("Updated path: ", node.getName() + " - " + second)
                     node.updateValue(second,dist,"0")
                     #add as neighbor if not in list
                     node.addNeighbor(second)
-                    print("New Vector: ", node.getVector())
+                    #print("New Vector: ", node.getVector())
             elif(node.getName() == second):
                 if(dist == -1):
                     node.updateValue(first,-1,-1)
                     node.delNeighbor(first)
                 else:
-                    print("Updated path: ", node.getName() + " - " + first)
+                    #print("Updated path: ", node.getName() + " - " + first)
                     node.updateValue(first,dist,"0")
                     node.addNeighbor(first)
-        print("After")
-        self.getVectors()
     
     def checkConvergence(self):
         temp = []
@@ -136,6 +132,7 @@ class Main:
                 break
             self.currentRound += 1
         print("Converged at Round: ", self.currentRound)
+        self.getVectors()
         print("Convergence Delay: ", self.currentRound - count)
 
         #Reset Values for Next Algorithm
@@ -175,7 +172,7 @@ class Main:
                 return node
 
     def getVectors(self):
-        print("Round: ",self.currentRound)
+        #print("Round: ",self.currentRound)
         col = "   "
         for i in range(len(self.network)):
             col += str(i + 1) + "    "
