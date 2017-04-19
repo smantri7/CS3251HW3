@@ -3,6 +3,7 @@ class Node:
     def __init__(self, name,vector):
         self.name = name
         self.vector = vector
+        self.neighbors = []
 
     def getName(self):
         return self.name
@@ -15,6 +16,16 @@ class Node:
 
     def getHops(self):
         return self.vector[2]
+
+    def getNList(self):
+        return self.neighbors
+
+    def addNeighbor(self,neigh):
+        if(neigh not in self.neighbors):
+            self.neighbors.append(neigh)
+
+    def delNeighbor(self,neigh):
+        self.neighbors.remove(neigh)
 
     def updateValue(self,name,value,hops):
         newTup = (name,value,hops)
@@ -43,13 +54,13 @@ class Node:
         self.vector = newVec
 
     def updateVectorByName(self, newVec):
-        for vec in self.vector:
-            if(name == vec[0]):
-                vec = newVec
+        for i in range(len(self.vector)):
+            if(newVec[0] == self.vector[i][0]):
+                self.vector[i] =  newVec
 
     def contains(self,name):
         for tup in self.vector:
-            if(name in tup[0]):
+            if(name == tup[0][0]):
                 return True
         return False
 
