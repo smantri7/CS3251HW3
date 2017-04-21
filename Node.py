@@ -1,5 +1,6 @@
+import math
 class Node:
-    #Vector is a list of tuples [(name,distance taken,hops needed)]
+    #Vector is a list of tuples [(name,distance taken,next hop, hops needed)]
     def __init__(self, name,vector):
         self.name = name
         self.vector = vector
@@ -14,9 +15,6 @@ class Node:
                 return v
         return None
 
-    def getHops(self):
-        return self.vector[2]
-
     def getNList(self):
         return self.neighbors
 
@@ -27,8 +25,8 @@ class Node:
     def delNeighbor(self,neigh):
         self.neighbors.remove(neigh)
 
-    def updateValue(self,name,value,hops):
-        newTup = (name,value,hops)
+    def updateValue(self,name,value,hops,hopsneeded):
+        newTup = (name,value,hops,hopsneeded)
         for v in self.vector:
             if(v[0] == name):
                 self.vector.remove(v)
@@ -36,14 +34,14 @@ class Node:
                 return
 
     def deleteValue(self,name):
-        tup = (name,-1,"-1")
+        tup = (name,-1,"-1",-1)
         for v in self.vector:
             if(v[0] == name):
                 v = tup
                 return
 
-    def addValue(self,name,dist,hops):
-        tup = (name,dist,hops)
+    def addValue(self,name,dist,hops,hopsneeded):
+        tup = (name,dist,hops,hopsneeded)
         if tup not in self.vector:
             self.vector.append(tup)
 
@@ -74,9 +72,6 @@ class Node:
         ans = self.name + " "
         for i in range(numNodes):
             v = self.getVectorByName(str(i + 1))
-            if(self.name == v[0]):
-                ans += "0,0" + "  "
-            else:
-                ans += str(v[2]) + "," + str(v[1])  + "  "
+            ans += str(v[2]) + "," + str(v[3])  + "  "
         return ans
 
