@@ -4,7 +4,7 @@ class Node:
     def __init__(self, name,vector):
         self.name = name
         self.vector = vector
-        self.neighbors = []
+        self.neighbors = {} #dictionary (neighborname, direct distance) DO NOT USE FOR Optimization!
 
     def getName(self):
         return self.name
@@ -18,12 +18,16 @@ class Node:
     def getNList(self):
         return self.neighbors
 
-    def addNeighbor(self,neigh):
-        if(neigh not in self.neighbors):
-            self.neighbors.append(neigh)
+    def addNeighbor(self,neigh,val):
+        self.neighbors[neigh] = val        
 
     def delNeighbor(self,neigh):
-        self.neighbors.remove(neigh)
+        del self.neighbors[neigh]
+
+    def getHopsTo(self,nodeName):
+        for vec in self.vector:
+            if(vec[0] == nodeName):
+                return vec[3]
 
     def updateValue(self,name,value,hops,hopsneeded):
         newTup = (name,value,hops,hopsneeded)
@@ -66,6 +70,12 @@ class Node:
         for vec in self.vector:
             if(name == vec[0]):
                 return vec
+        return None
+
+    def getDistanceTo(self,nodeName):
+        for vec in self.vector:
+            if(nodeName == vec[0]):
+                return vec[1]
         return None
 
     def printVector(self,numNodes):

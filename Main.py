@@ -30,11 +30,11 @@ class Main:
                 if(node.getName() == first):
                     node.addValue(second,int(dist),second,1)
                     node.addValue(first,0,first,0)
-                    node.addNeighbor(second)
+                    node.addNeighbor(second,int(dist))
                 elif(node.getName() == second):
                     node.addValue(first,int(dist),first,1)
                     node.addValue(second,0,second,0)
-                    node.addNeighbor(first)
+                    node.addNeighbor(first,int(dist))
         f.close()
         for node in self.network:
             for name in self.nodeNames: 
@@ -52,24 +52,32 @@ class Main:
     #finds best path using Bellman Ford with each router sharing only each other's DV
     def updateVectorTable(self,node):
         for n in node.getVector():
-            if n[0] in node.getNList():
+            if n[0] in node.getNList().keys():
                 neighbor = self.getNodeByName(n[0])
                 for vector in neighbor.getVector():
-                    print("Current Node to Update: ",node.getName())
-                    print("Current vector: ",vector[0])
-                    print("Current n vec: ",n[0])
-
-                    old = node.getVectorByName(vector[0])[1]
-                    new = vector[1] + n[1]
-                    print("Old: ",old)
-                    print("New: ",new)
-                    if(vector[1] != -1 and vector[0] != n[2]):
-                        if(new < old or old == -1):
-                            newHops = n[3]
-                            newHops += 1
-                            print("Updated!")
-                            node.updateVectorByName((vector[0], new, neighbor.getName(),newHops))
-                    print("_____")
+                    #print("Current Node to Update: ",node.getName())
+                    #print("Current vector: ",vector[0])
+                    #print("Current n vec: ",n[0])
+                    if(vector[0] in node.getNList().keys()):
+                        real = node.getNList()[vector[0]]
+                        new = vector[1] + n[1]
+                        #print("Real: ",real)
+                        #print("New: ", new)
+                        if(vector[1] != -1):
+                            if(new < real):
+                                print("Updated A!")
+                                node.updateVectorByName((vector[0], new, neighbor.getName(),1))
+                    else:
+                        old = node.getVectorByName(vector[0])[1]
+                        new = vector[1] + n[1]
+                        #print("Old: ",old)
+                        #print("New: ",new)
+                        if(vector[1] != -1):
+                            if(new < old or old == -1):
+                                newHops = 1 + vector[3]
+                                print("Updated B!")
+                                node.updateVectorByName((vector[0], new, neighbor.getName(),newHops))
+                        #print("_____")
 
     def updateVectorTableSplitHorizon(self,node):
         for n in node.getVector():
@@ -120,24 +128,19 @@ class Main:
             if(node.getName() == first):
                 if(dist == -1):
                     #kill the link with the other node
-                    node.updateValue(second,-1,-1,-1)
                     #kill neighbor pointer
                     node.delNeighbor(second)
                 else:
                     #else update the other link
-                    #print("Updated path: ", node.getName() + " - " + second)
-                    node.updateValue(second,dist,second,0)
-                    #add as neighbor if not in list
-                    node.addNeighbor(second)
+                    node.addNeighbor(second,dist)
                     #print("New Vector: ", node.getVector())
             elif(node.getName() == second):
                 if(dist == -1):
-                    node.updateValue(first,-1,-1,-1)
                     node.delNeighbor(first)
                 else:
                     #print("Updated path: ", node.getName() + " - " + first)
-                    node.updateValue(first,dist,first,0)
-                    node.addNeighbor(first)
+                    node.addNeighbor(first,dist)
+        #Now we fix any of first's vectors going through second and vice versa
         for node in self.network:
             print("For node " + str(node.getName()) , node.getVector())
     def checkConvergence(self):
@@ -159,7 +162,7 @@ class Main:
         self.setup("basic")
         converged = False
         count = 0
-        while True:
+        while self.currentRound < 5:
             if(self.flag == 1):
                 print("At Round: ",self.currentRound)
                 for node in self.network:
