@@ -1,6 +1,8 @@
 from Node import Node
 import queue
 import math
+from operator import itemgetter 
+import sys
 class Main:
     
     def __init__(self,initial,events,flag):
@@ -50,65 +52,66 @@ class Main:
         f.close()
 
     #finds best path using Bellman Ford with each router sharing only each other's DV
-    def updateVectorTable(self,node):
-        for n in node.getVector():
-            if n[0] in node.getNList().keys():
-                neighbor = self.getNodeByName(n[0])
-                for vector in neighbor.getVector():
-                    #print("Current Node to Update: ",node.getName())
-                    #print("Current vector: ",vector[0])
-                    #print("Current n vec: ",n[0])
-                    if(vector[0] in node.getNList().keys()):
-                        real = node.getNList()[vector[0]]
-                        new = vector[1] + n[1]
-                        #print("Real: ",real)
-                        #print("New: ", new)
-                        if(vector[1] != -1):
-                            if(new < real):
-                                print("Updated A!")
-                                node.updateVectorByName((vector[0], new, neighbor.getName(),1))
-                    else:
-                        old = node.getVectorByName(vector[0])[1]
-                        new = vector[1] + n[1]
-                        #print("Old: ",old)
-                        #print("New: ",new)
-                        if(vector[1] != -1):
-                            if(new < old or old == -1):
-                                newHops = 1 + vector[3]
-                                print("Updated B!")
-                                node.updateVectorByName((vector[0], new, neighbor.getName(),newHops))
-                        #print("_____")
+    def updateVectorTable(self,node,updateDict):
+        for y in node.getVector():
+            routes = []
+            for v in node.getNList().keys():
+                v = self.getNodeByName(v)
+                newdvy = self.getAdvertised(v,y[0])
+                dvy = [newdvy[0],newdvy[1],newdvy[2],newdvy[3]]
+                neg = (dvy[1] == -1)
+                dvy[1] += self.getReal(node,v.getName())
+                dvy[3] += 1
+                dvy[2] = v.getName()
+                if(dvy[0] != node.getName() and not neg): #route to itself should always stay the same
+                    routes.append(dvy)
+            if(len(routes) != 0): #Make sure routes to that node are existent
+                best = sorted(routes,key=itemgetter(1))[0]
+                updateDict[node.getName()].append(best)
+        return updateDict
 
-    def updateVectorTableSplitHorizon(self,node):
-        for n in node.getVector():
-            if n[0] in node.getNList():
-                neighbor = self.getNodeByName(n[0])
-                for vector in neighbor.getVector():
-                    new = vector[1] + n[1]
-                    old = node.getVectorByName(vector[0])[1]
-                    if(vector[2] == node.getName()):
-                        if(vector[1] != -1):
-                            if(new < old or old == -1):
-                                #print("Updated: ",(vector[0], new, str(neighbor.getName())))
-                                newHops = n[3]
-                                newHops += 1
-                                node.updateVectorByName((vector[0], new, neighbor.getName(),newHops))
+    def updateVectorTableSplitHorizon(self,node,updateDict):
+        for y in node.getVector():
+            routes = []
+            for v in node.getNList().keys():
+                v = self.getNodeByName(v)
+                newdvy = self.getAdvertised(v,y[0])
+                dvy = [newdvy[0],newdvy[1],newdvy[2],newdvy[3]]
+                neg = (dvy[1] == -1)
+                flag = dvy[2]
+                dvy[1] += self.getReal(node,v.getName())
+                dvy[3] += 1
+                dvy[2] = v.getName()
+                if(dvy[0] != node.getName() and not neg): #route to itself should always stay the same
+                    if flag != node.getName():
+                        routes.append(dvy)
+            if(len(routes) != 0): #Make sure routes to that node are existent
+                best = sorted(routes,key=itemgetter(1))[0]
+                updateDict[node.getName()].append(best)
+        return updateDict
     
-    def updateVectorTableSplitHorizonPoisonReverse(self,node):
-        for n in node.getVector():
-            if n[0] in node.getNList():
-                neighbor = self.getNodeByName(n[0])
-                for vector in neighbor.getVector():
-                    new = vector[1] + n[1]
-                    old = node.getVectorByName(vector[0])[1]
-                    if(vector[2] != node.getName()):
-                        new = math.inf
-                    if(vector[1] != -1):
-                        if(new < old or old == -1):
-                            #print("Updated: ",(vector[0], new, str(neighbor.getName())))
-                            newHops = n[3]
-                            newHops += 1
-                            node.updateVectorByName((vector[0], new, neighbor.getName(),newHops))
+    def updateVectorTableSplitHorizonPoisonReverse(self,node,updateDict):
+        for y in node.getVector():
+            routes = []
+            for v in node.getNList().keys():
+                v = self.getNodeByName(v)
+                newdvy = self.getAdvertised(v,y[0])
+                dvy = [newdvy[0],newdvy[1],newdvy[2],newdvy[3]]
+                neg = (dvy[1] == -1)
+                flag = dvy[2]
+                dvy[1] += self.getReal(node,v.getName())
+                dvy[3] += 1
+                dvy[2] = v.getName()
+                if(dvy[0] != node.getName() and not neg): #route to itself should always stay the same
+                    if flag != node.getName():
+                        routes.append(dvy)
+                    else:
+                        dvy[1] = float(math.inf)
+                        routes.append(dvy)
+            if(len(routes) != 0): #Make sure routes to that node are existent
+                best = sorted(routes,key=itemgetter(1))[0]
+                updateDict[node.getName()].append(best)
+        return updateDict
 
     def doEvent(self,curRound):
         for i in range(len(self.events)):
@@ -120,7 +123,6 @@ class Main:
         return False
 
     def updateEvent(self,event):
-        print("Event Occurred")
         first = event[1]
         second = event[2]
         dist = event[3]
@@ -133,6 +135,7 @@ class Main:
                 else:
                     #else update the other link
                     node.addNeighbor(second,dist)
+                    #node.updateValue(second,-1,"-1",-1)
                     #print("New Vector: ", node.getVector())
             elif(node.getName() == second):
                 if(dist == -1):
@@ -140,9 +143,8 @@ class Main:
                 else:
                     #print("Updated path: ", node.getName() + " - " + first)
                     node.addNeighbor(first,dist)
+                    #node.updateValue(first,-1,"-1",-1)
         #Now we fix any of first's vectors going through second and vice versa
-        for node in self.network:
-            print("For node " + str(node.getName()) , node.getVector())
     def checkConvergence(self):
         temp = []
         if(len(self.previous) == 0):
@@ -162,115 +164,168 @@ class Main:
         self.setup("basic")
         converged = False
         count = 0
-        while self.currentRound < 5:
-            if(self.flag == 1):
-                print("At Round: ",self.currentRound)
-                for node in self.network:
-                    print("For node " + str(node.getName()) , node.getVector())
-                self.getVectors()
-            if(self.checkConvergence() and converged):
-                print("OUT")
-                break
-            self.doEvent(self.currentRound)
-            if(len(self.events) == 0):
-                converged = True
-                count = self.currentRound
-            for node in self.network:
-                self.updateVectorTable(node)
-            if(self.currentRound - count > 100):
-                print("Error: Count to infinity Problem detected. Ending this program.")
-                return
-            self.currentRound += 1
-        print("Converged at Round: ", self.currentRound)
-        self.getVectors()
-        print("Convergence Delay: ", self.currentRound - count + 1)
-
-        #Reset Values for Next Algorithm
-        self.network = [] #list of nodes
-        self.events = [] #list of events and their descriptions
-        self.nodeNames = [] # a list of names of all nodes
-        self.currentRound = 1 #current round
-        self.previous = []
-
-    def splitHorizon(self):
-        self.setup("splith")
-
-        """TO DO IMPLEMENT SPLIT HORIZON"""
-        converged = False
-        count = 0
+        queue = []
         while True:
             if(self.flag == 1):
-                print("At Round: ",self.currentRound)
-                self.getVectors()
-            self.doEvent(self.currentRound)
-            if(len(self.events) == 0):
-                converged = True
-                count = self.currentRound
-            for node in self.network:
-                self.updateVectorTableSplitHorizonPoisonReverse(node)
-            if(self.currentRound - count > 100):
-                print("Error: Count to infinity Problem detected. Ending this program.")
-                return
+                #print("At Round: ",self.currentRound)
+                vecs = self.getVectors()
+                queue.append((self.currentRound,vecs))
             if(self.checkConvergence() and converged):
                 break
-            self.currentRound += 1
-        print("Converged at Round: ", self.currentRound)
-        self.getVectors()
-        print("Convergence Delay: ", self.currentRound - count + 1)
-        #Reset values for next algorithm
-        self.network = [] #list of nodes
-        self.events = [] #list of events and their descriptions
-        self.nodeNames = [] # a list of names of all nodes
-        self.currentRound = 1 #current round
-        self.previous = []
+            event = self.doEvent(self.currentRound)
+            if(len(self.events) == 0 and not converged):
+                converged = True
+                count = self.currentRound
+
+            #Update Code Starts
+            #before update, set previous
+            updateDict = {}
+            for namae in self.nodeNames:
+                updateDict[namae] = []
+            for node in self.network:
+                updateDict = self.updateVectorTable(node,updateDict)
+
+            for y in updateDict.keys():
+                swag = self.getNodeByName(y)
+                for suc in updateDict[y]:
+                    swag.updateVectorByName(suc)
+            #Update Code Ends
+
+
+            if(self.currentRound - count > 100):
+                return "Error: Count to infinity Problem detected. Ending this program."
+            self.currentRound+= 1
+        ans = ""
+        for i in range(len(queue) - 1):
+            ans += "At round: " + str(queue[i][0]) + "\n"
+            ans += queue[i][1] + "\n"
+        if(self.flag == 0):
+            ans += self.getVectors() + "\n"
+        ans += "Converged at Round: " + str(self.currentRound - 1) + "\n"
+        ans += "Convergence Delay: " +  str(self.currentRound - count - 1) + "\n"
+        return ans
+    def splitHorizon(self):
+        self.setup("splith")
+        converged = False
+        count = 0
+        queue = []
+        while True:
+            if(self.flag == 1):
+                #print("At Round: ",self.currentRound)
+                vecs = self.getVectors()
+                queue.append((self.currentRound,vecs))
+            if(self.checkConvergence() and converged):
+                break
+            event = self.doEvent(self.currentRound)
+            if(len(self.events) == 0 and not converged):
+                converged = True
+                count = self.currentRound
+            #Update Code Starts
+            #before update, set previous
+            updateDict = {}
+            for namae in self.nodeNames:
+                updateDict[namae] = []
+            for node in self.network:
+                updateDict = self.updateVectorTableSplitHorizon(node,updateDict)
+
+            for y in updateDict.keys():
+                swag = self.getNodeByName(y)
+                for suc in updateDict[y]:
+                    swag.updateVectorByName(suc)
+            #Update Code Ends
+
+
+            if(self.currentRound - count > 100):
+                return "Error: Count to infinity Problem detected. Ending this program."
+            self.currentRound+= 1
+        ans = ""
+        for i in range(len(queue) - 1):
+            ans += "At round: " + str(queue[i][0]) + "\n"
+            ans += queue[i][1] + "\n"
+        if(self.flag == 0):
+            ans += self.getVectors() + "\n"
+        ans += "Converged at Round: " + str(self.currentRound - 1) + "\n"
+        ans += "Convergence Delay: " +  str(self.currentRound - count - 1) + "\n"
+        return ans
 
     def splitHorizonPV(self):
         self.setup("splithpv")
-
         converged = False
         count = 0
+        queue = []
         while True:
             if(self.flag == 1):
-                print("At Round: ",self.currentRound)
-                self.getVectors()
-            self.doEvent(self.currentRound)
+                #print("At Round: ",self.currentRound)
+                vecs = self.getVectors()
+                queue.append((self.currentRound,vecs))
             if(self.checkConvergence() and converged):
                 break
-            if(len(self.events) == 0):
+            event = self.doEvent(self.currentRound)
+            if(len(self.events) == 0 and not converged):
                 converged = True
                 count = self.currentRound
+            #Update Code Starts
+            #before update, set previous
+            updateDict = {}
+            for namae in self.nodeNames:
+                updateDict[namae] = []
             for node in self.network:
-                self.updateVectorTableSplitHorizonPoisonReverse(node)
-            if(self.currentRound - count > 100):
-                print("Error: Count to infinity Problem detected. Ending this program.")
-                return
-            self.currentRound += 1
-        print("Converged at Round: ", self.currentRound)
-        self.getVectors()
-        print("Convergence Delay: ", self.currentRound - count + 1)
-        #Reset values for next algorithm
-        self.network = [] #list of nodes
-        self.events = [] #list of events and their descriptions
-        self.nodeNames = [] # a list of names of all nodes
-        self.currentRound = 1 #current round
-        self.previous = []
+                updateDict = self.updateVectorTableSplitHorizonPoisonReverse(node,updateDict)
 
+            for y in updateDict.keys():
+                swag = self.getNodeByName(y)
+                for suc in updateDict[y]:
+                    swag.updateVectorByName(suc)
+            #Update Code Ends
+            if(self.currentRound - count > 100):
+                return "Error: Count to infinity Problem detected. Ending this program.\n"
+            self.currentRound+= 1
+        ans = ""
+        for i in range(len(queue) - 1):
+            ans += "At round: " + str(queue[i][0]) + "\n"
+            ans += queue[i][1] + "\n"
+        if(self.flag == 0):
+            ans += self.getVectors() + "\n"
+        ans += "Converged at Round: " + str(self.currentRound - 1) + "\n"
+        ans += "Convergence Delay: " +  str(self.currentRound - count - 1) + "\n"
+        return ans
+    
     def getNodeByName(self,name):
         for node in self.network:
             if(node.getName() == name):
                 return node
 
+    def getAdvertised(self,node,neighbor):
+        return node.getVectorByName(neighbor)
+
+    def getReal(self,node,neigh):
+        maps = node.getNList()
+        return maps[neigh]
+
     def getVectors(self):
         #print("Round: ",self.currentRound)
+        ans = ""
         col = "   "
         for i in range(len(self.network)):
-            col += str(i + 1) + "    "
-        print(col)
+            col += " " + str(i + 1) + "     "
+        ans += col + "\n"
         for node in self.network:
-            print(node.printVector(len(self.network)))
+            ans += node.printVector(len(self.network)) + "\n"
+        return ans
 
 if __name__ == "__main__":
-    m = Main("initial.txt","event.txt",1)
-    ma = Main("initial.txt","event.txt",1)
-    ma.basic()
-    #m.splitHorizonPV()
+    f = open("ans.txt",'w')
+    #initial.txt event.txt flag
+    m = Main(sys.argv[1],sys.argv[2],int(sys.argv[3]))
+    ma = Main(sys.argv[1],sys.argv[2],int(sys.argv[3]))
+    maa = Main(sys.argv[1],sys.argv[2],int(sys.argv[3]))
+    f.write("Basic: \n")
+    f.write(ma.basic())
+    f.write("____________________________________\n")
+    f.write("Split Horizon: \n")
+    f.write(maa.splitHorizon())
+    f.write("____________________________________\n")
+    f.write("Split Horizon Poison Reverse: \n")
+    f.write(m.splitHorizonPV())
+    f.write("____________________________________")
+    f.close()

@@ -1,0 +1,20 @@
+""""""""""""""""README""""""""""""""""""""""""""
+Your name (or names for group projects), email addresses, date and assignment title
+● Names and descriptions of all files submitted
+● Detailed instructions for compiling and running your programs
+● Any known bugs or limitations of your program
+
+CS 3251 Homework Assignment 3
+Shantanu Mantri smantri7@gatech.edu
+
+Compile/Run: USING PYTHON 3
+python (file name of initializations).txt (file name of events).txt flag (0 or 1)
+
+python initial.txt event.txt flag
+
+For example:
+
+python initial.txt event.txt 0
+
+
+-> An "ans.txt" file will be created with the answers

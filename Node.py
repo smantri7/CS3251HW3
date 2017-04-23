@@ -1,11 +1,17 @@
 import math
 class Node:
-    #Vector is a list of tuples [(name,distance taken,next hop, hops needed)]
+    #Vector is a 2D list [[name,distance taken,next hop, hops needed]]
     def __init__(self, name,vector):
         self.name = name
         self.vector = vector
         self.neighbors = {} #dictionary (neighborname, direct distance) DO NOT USE FOR Optimization!
+        self.previous = []
 
+    def advertise(self,n):
+        for tup in self.vector:
+            if(tup[0] == n):
+                return tup
+                
     def getName(self):
         return self.name
 
@@ -15,6 +21,11 @@ class Node:
                 return v
         return None
 
+    def getPrevious(self):
+        return self.previous
+
+    def setPrevious(self,vectors):
+        self.previous = vectors
     def getNList(self):
         return self.neighbors
 
@@ -30,7 +41,7 @@ class Node:
                 return vec[3]
 
     def updateValue(self,name,value,hops,hopsneeded):
-        newTup = (name,value,hops,hopsneeded)
+        newTup = [name,value,hops,hopsneeded]
         for v in self.vector:
             if(v[0] == name):
                 self.vector.remove(v)
@@ -45,7 +56,7 @@ class Node:
                 return
 
     def addValue(self,name,dist,hops,hopsneeded):
-        tup = (name,dist,hops,hopsneeded)
+        tup = [name,dist,hops,hopsneeded]
         if tup not in self.vector:
             self.vector.append(tup)
 
@@ -82,6 +93,7 @@ class Node:
         ans = self.name + " "
         for i in range(numNodes):
             v = self.getVectorByName(str(i + 1))
-            ans += str(v[2]) + "," + str(v[3])  + "  "
+            #ans += str(v[2]) + "," + str(v[3])  + "  "
+            ans += str(v[2]) + "," + str(v[3])  + "," + str(v[1]) + "  "
         return ans
 
